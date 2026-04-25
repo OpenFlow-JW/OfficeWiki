@@ -1,19 +1,24 @@
 #!/usr/bin/env node
 import { cmdInit } from '../src/core/cmd_init.mjs';
-import { cmdIndex } from '../src/core/cmd_index.mjs';
 import { cmdIngest } from '../src/core/cmd_ingest.mjs';
+import { cmdIndex } from '../src/core/cmd_index.mjs';
+import { cmdSetup } from '../src/core/cmd_setup.mjs';
+import { cmdSummarize } from '../src/core/cmd_summarize.mjs';
 
 function usage() {
   console.log(`OfficeWiki (v0)
 
 Usage:
   officewiki init <workspace>
+  officewiki setup <workspace>
   officewiki ingest <workspace> <path_or_url>
   officewiki index <workspace>
+  officewiki summarize <workspace>
 
 Notes:
-- v0 is text-first (.md/.txt).
-- workspace/raw is the source-of-truth; ingest records references (no copy by default).
+- workspace is the output home (wiki/ontology/workflows/state).
+- rawRoot is a directory you point OfficeWiki at; files are never moved or copied by default.
+- LLM is BYOK (keys via env only). See docs/BYOK.md
 `);
 }
 
@@ -29,17 +34,38 @@ async function main(argv) {
       const [workspace] = rest;
       if (!workspace) throw new Error('Missing <workspace>');
       await cmdInit({ workspace });
-    } else if (cmd === 'ingest') {
+      return;
+    }
+
+    if (cmd === 'setup') {
+      const [workspace] = rest;
+      if (!workspace) throw new Error('Missing <workspace>');
+      await cmdSetup({ workspace });
+      return;
+    }
+
+    if (cmd === 'ingest') {
       const [workspace, target] = rest;
       if (!workspace || !target) throw new Error('Missing <workspace> or <path_or_url>');
       await cmdIngest({ workspace, target });
-    } else if (cmd === 'index') {
+      return;
+    }
+
+    if (cmd === 'index') {
       const [workspace] = rest;
       if (!workspace) throw new Error('Missing <workspace>');
       await cmdIndex({ workspace });
-    } else {
-      throw new Error(`Unknown command: ${cmd}`);
+      return;
     }
+
+    if (cmd === 'summarize') {
+      const [workspace] = rest;
+      if (!workspace) throw new Error('Missing <workspace>');
+      await cmdSummarize({ workspace });
+      return;
+    }
+
+    throw new Error(`Unknown command: ${cmd}`);
   } catch (e) {
     console.error(String(e?.message || e));
     process.exit(1);

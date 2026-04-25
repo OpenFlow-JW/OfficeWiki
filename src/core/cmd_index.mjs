@@ -13,7 +13,7 @@ function toSafeName(relPath) {
     .replace(/[^a-zA-Z0-9._\-가-힣]/g, '_');
 }
 
-export async function cmdIndex({ workspace }) {
+export async function cmdIndex({ workspace, rawRoot = null }) {
   const p = workspacePaths(workspace);
   await ensureDir(p.wiki);
   await ensureDir(p.stateDir);
@@ -24,9 +24,11 @@ export async function cmdIndex({ workspace }) {
   let indexed = 0;
   let skipped = 0;
 
-  for await (const fp of walkFiles(p.raw)) {
+  const root = rawRoot || p.raw;
+
+  for await (const fp of walkFiles(root)) {
     scanned++;
-    const rel = path.relative(p.raw, fp).split(path.sep).join('/');
+    const rel = path.relative(root, fp).split(path.sep).join('/');
     if (!canParseText(fp)) { skipped++; continue; }
 
     const st = await fs.stat(fp);
