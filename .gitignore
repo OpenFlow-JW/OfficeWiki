@@ -1,0 +1,6 @@
+# local
+.DS_Store
+node_modules/
+
+# workspace outputs
+workspace/wiki/
