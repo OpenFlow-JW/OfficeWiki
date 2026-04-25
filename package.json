@@ -1,0 +1,16 @@
+{
+  "name": "officewiki",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "description": "OfficeWiki CLI (v0) — Raw → Wiki → Ontology",
+  "bin": {
+    "officewiki": "./bin/officewiki.mjs"
+  },
+  "scripts": {
+    "dev": "node ./bin/officewiki.mjs",
+    "lint": "node ./bin/officewiki.mjs --help",
+    "test": "node ./bin/officewiki.mjs --help"
+  },
+  "license": "UNLICENSED"
+}
