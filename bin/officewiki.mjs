@@ -16,6 +16,7 @@ Usage:
   officewiki ingest <workspace> <path_or_url>
   officewiki index <workspace> [--vision] [--vision-max-pages N]
   officewiki summarize <workspace>
+  officewiki ontology-setup <workspace>
   officewiki shell <workspace>
 
 Notes:
@@ -67,6 +68,14 @@ async function main(argv) {
       const [workspace] = rest;
       if (!workspace) throw new Error('Missing <workspace>');
       await cmdSummarize({ workspace });
+      return;
+    }
+
+    if (cmd === 'ontology-setup') {
+      const [workspace] = rest;
+      if (!workspace) throw new Error('Missing <workspace>');
+      const { cmdOntologySetup } = await import('../src/core/cmd_ontology_setup.mjs');
+      await cmdOntologySetup({ workspace });
       return;
     }
 

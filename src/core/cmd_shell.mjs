@@ -2,6 +2,7 @@ import { runRepl } from './repl.mjs';
 import { loadConfig } from './config.mjs';
 import { cmdIndex } from './cmd_index.mjs';
 import { cmdSummarize } from './cmd_summarize.mjs';
+import { cmdOntologySetup } from './cmd_ontology_setup.mjs';
 
 function help() {
   console.log(`OfficeWiki Shell
@@ -13,7 +14,7 @@ Commands:
   /exit
 
 Agent-style shorthand:
-  @ontology-setup  (planned)
+  @ontology-setup  -> ontology Q&A wizard (writes workspace/ontology/*.md)
   @summarizer      -> /summarize
 
 Note:
@@ -37,6 +38,10 @@ export async function cmdShell({ workspace }) {
       if (line === '/help') return help();
       if (line.startsWith('@')) {
         const agent = line.slice(1).trim();
+        if (agent === 'ontology-setup') {
+          await cmdOntologySetup({ workspace });
+          return;
+        }
         if (agent === 'summarizer') {
           await cmdSummarize({ workspace });
           return;
