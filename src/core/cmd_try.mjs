@@ -9,6 +9,7 @@ import { ensureDir, readJson } from './fsutil.mjs';
 import { findCandidates } from './scan_candidates.mjs';
 import { workspacePaths } from './paths.mjs';
 import { llmChat } from './llm.mjs';
+import { tuiMultiSelect } from './tui_select.mjs';
 
 function fmtBytes(n) {
   if (n < 1024) return `${n} B`;
@@ -133,15 +134,34 @@ export async function cmdTry({ workspace }) {
     return;
   }
 
-  console.log('\n아래와 같은 파일을 찾았습니다. Ontology를 만들어볼만한 파일을 선택해보면 어떨까요?');
-  candidates.forEach((c, i) => {
+  const uiLines = candidates.map((c) => {
     const dt = new Date(c.mtimeMs).toISOString().slice(0, 10);
-    console.log(`${String(i + 1).padStart(2, ' ')}. [${c.ext}] ${c.rel}  (${fmtBytes(c.size)}, ${dt})`);
+    return `[${c.ext}] ${c.rel}  (${fmtBytes(c.size)}, ${dt})`;
   });
 
-  const selRaw = await ask('선택 (기본 2개, 최대 5개) — 예: "1 2"', { defaultValue: defaultSelection(candidates.length) });
-  const picks = parseSelection(selRaw, candidates.length, { maxPick: 5 });
-  if (picks.length === 0) throw new Error('No files selected.');
+  let picks = null;
+  if (process.stdout.isTTY) {
+    picks = await tuiMultiSelect({
+      title: '아래와 같은 파일을 찾았습니다. Ontology를 만들어볼만한 파일을 선택해보면 어떨까요?',
+      items: uiLines,
+      defaultSelectedIdx: candidates.length >= 2 ? [0, 1] : [0],
+      minPick: 1,
+      maxPick: 5
+    });
+    if (picks === null) return; // cancelled
+    // tui returns 0-based indices
+    picks = picks.map(i => i + 1);
+  } else {
+    console.log('\n아래와 같은 파일을 찾았습니다. Ontology를 만들어볼만한 파일을 선택해보면 어떨까요?');
+    candidates.forEach((c, i) => {
+      const dt = new Date(c.mtimeMs).toISOString().slice(0, 10);
+      console.log(`${String(i + 1).padStart(2, ' ')}. [${c.ext}] ${c.rel}  (${fmtBytes(c.size)}, ${dt})`);
+    });
+
+    const selRaw = await ask('선택 (기본 2개, 최대 5개) — 예: "1 2"', { defaultValue: defaultSelection(candidates.length) });
+    picks = parseSelection(selRaw, candidates.length, { maxPick: 5 });
+    if (picks.length === 0) throw new Error('No files selected.');
+  }
 
   // Copy selected into workspace/raw for indexing (non-destructive).
   const rawRoot = cfg.rawRoot || path.join(p.root, 'raw');

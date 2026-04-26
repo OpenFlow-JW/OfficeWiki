@@ -7,3 +7,4 @@ workspace/wiki/
 
 # local workspaces created during dev / tests
 officewiki_workspace/
+_tmpws/
