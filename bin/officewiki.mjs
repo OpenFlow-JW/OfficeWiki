@@ -4,6 +4,7 @@ import { cmdIngest } from '../src/core/cmd_ingest.mjs';
 import { cmdIndex } from '../src/core/cmd_index.mjs';
 import { cmdSetup } from '../src/core/cmd_setup.mjs';
 import { cmdSummarize } from '../src/core/cmd_summarize.mjs';
+import { cmdShell } from '../src/core/cmd_shell.mjs';
 import { hasFlag, getFlagValue } from '../src/core/args.mjs';
 
 function usage() {
@@ -15,6 +16,7 @@ Usage:
   officewiki ingest <workspace> <path_or_url>
   officewiki index <workspace> [--vision] [--vision-max-pages N]
   officewiki summarize <workspace>
+  officewiki shell <workspace>
 
 Notes:
 - workspace is the output home (wiki/ontology/workflows/state).
@@ -65,6 +67,13 @@ async function main(argv) {
       const [workspace] = rest;
       if (!workspace) throw new Error('Missing <workspace>');
       await cmdSummarize({ workspace });
+      return;
+    }
+
+    if (cmd === 'shell') {
+      const [workspace] = rest;
+      if (!workspace) throw new Error('Missing <workspace>');
+      await cmdShell({ workspace });
       return;
     }
 
