@@ -12,5 +12,9 @@
     "lint": "node ./bin/officewiki.mjs --help",
     "test": "node ./bin/officewiki.mjs --help"
   },
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "dependencies": {
+    "pdfjs-dist": "^4.10.38",
+    "yauzl": "^3.1.3"
+  }
 }

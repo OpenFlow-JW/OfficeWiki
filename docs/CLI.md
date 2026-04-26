@@ -11,9 +11,9 @@ officewiki ingest ./my-workspace /path/to/somewhere
 ```
 
 ## index
-Put files under `./my-workspace/raw/` and run:
+Put files under `./my-workspace/officewiki-raw/` and run:
 ```bash
 officewiki index ./my-workspace
 ```
 
-v0 parses `.md` and `.txt` into `./my-workspace/wiki/`.
+v0 parses `.md`, `.txt`, `.pdf`(text), `.docx`, `.pptx`, `.xlsx` into `./my-workspace/wiki/`.
