@@ -5,19 +5,25 @@ import { cmdIndex } from '../src/core/cmd_index.mjs';
 import { cmdSetup } from '../src/core/cmd_setup.mjs';
 import { cmdSummarize } from '../src/core/cmd_summarize.mjs';
 import { cmdShell } from '../src/core/cmd_shell.mjs';
+import { cmdTry } from '../src/core/cmd_try.mjs';
 import { hasFlag, getFlagValue } from '../src/core/args.mjs';
+import { resolveWorkspaceArg, DEFAULT_WORKSPACE_DIRNAME } from '../src/core/workspace_default.mjs';
 
 function usage() {
   console.log(`OfficeWiki (v0)
 
 Usage:
-  officewiki init <workspace>
-  officewiki setup <workspace>
-  officewiki ingest <workspace> <path_or_url>
-  officewiki index <workspace> [--vision] [--vision-max-pages N]
-  officewiki summarize <workspace>
-  officewiki ontology-setup <workspace>
-  officewiki shell <workspace>
+  officewiki init [workspace]
+  officewiki setup [workspace]
+  officewiki ingest [workspace] <path_or_url>
+  officewiki index [workspace] [--vision] [--vision-max-pages N]
+  officewiki summarize [workspace]
+  officewiki ontology-setup [workspace]
+  officewiki try [workspace]
+  officewiki shell [workspace]
+
+Default workspace:
+  ./${DEFAULT_WORKSPACE_DIRNAME}
 
 Notes:
 - workspace is the output home (wiki/ontology/workflows/state).
@@ -35,29 +41,31 @@ async function main(argv) {
 
   try {
     if (cmd === 'init') {
-      const [workspace] = rest;
-      if (!workspace) throw new Error('Missing <workspace>');
+      const workspace = resolveWorkspaceArg(rest[0]);
       await cmdInit({ workspace });
       return;
     }
 
     if (cmd === 'setup') {
-      const [workspace] = rest;
-      if (!workspace) throw new Error('Missing <workspace>');
+      const workspace = resolveWorkspaceArg(rest[0]);
       await cmdSetup({ workspace });
       return;
     }
 
     if (cmd === 'ingest') {
-      const [workspace, target] = rest;
-      if (!workspace || !target) throw new Error('Missing <workspace> or <path_or_url>');
-      await cmdIngest({ workspace, target });
+      // If first arg is a path/url, workspace is default.
+      const workspace = (rest[0] && (rest[0].startsWith('http') || rest[0].startsWith('/') || rest[0].startsWith('./') || rest[0].startsWith('../')))
+        ? resolveWorkspaceArg(null)
+        : resolveWorkspaceArg(rest[0]);
+      const t = (workspace === resolveWorkspaceArg(null)) ? rest[0] : rest[1];
+      if (!t) throw new Error('Missing <path_or_url>');
+      await cmdIngest({ workspace, target: t });
       return;
     }
 
     if (cmd === 'index') {
-      const [workspace, ...args] = rest;
-      if (!workspace) throw new Error('Missing <workspace>');
+      const workspace = resolveWorkspaceArg(rest[0]);
+      const args = (rest[0] && !rest[0].startsWith('-')) ? rest.slice(1) : rest;
       const vision = hasFlag(args, '--vision');
       const visionMaxPages = Number(getFlagValue(args, '--vision-max-pages', '10'));
       await cmdIndex({ workspace, vision, visionMaxPages });
@@ -65,23 +73,26 @@ async function main(argv) {
     }
 
     if (cmd === 'summarize') {
-      const [workspace] = rest;
-      if (!workspace) throw new Error('Missing <workspace>');
+      const workspace = resolveWorkspaceArg(rest[0]);
       await cmdSummarize({ workspace });
       return;
     }
 
     if (cmd === 'ontology-setup') {
-      const [workspace] = rest;
-      if (!workspace) throw new Error('Missing <workspace>');
+      const workspace = resolveWorkspaceArg(rest[0]);
       const { cmdOntologySetup } = await import('../src/core/cmd_ontology_setup.mjs');
       await cmdOntologySetup({ workspace });
       return;
     }
 
+    if (cmd === 'try') {
+      const workspace = resolveWorkspaceArg(rest[0]);
+      await cmdTry({ workspace });
+      return;
+    }
+
     if (cmd === 'shell') {
-      const [workspace] = rest;
-      if (!workspace) throw new Error('Missing <workspace>');
+      const workspace = resolveWorkspaceArg(rest[0]);
       await cmdShell({ workspace });
       return;
     }
