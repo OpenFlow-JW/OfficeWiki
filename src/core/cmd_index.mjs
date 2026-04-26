@@ -6,6 +6,8 @@ import { ensureDir, readJson, writeJson, sha256File } from './fsutil.mjs';
 import { walkFiles } from './walk.mjs';
 import { canParseText, parseTextToMarkdown } from '../parsers/text.mjs';
 import { canParsePdf, parsePdfToMarkdownPages } from '../parsers/pdf.mjs';
+import { visionTranscribePdf } from '../parsers/pdf_vision.mjs';
+import { hasTesseract } from '../parsers/pdf_ocr_tesseract.mjs';
 import { canParseDocx, parseDocxToMarkdown } from '../parsers/docx.mjs';
 import { canParsePptx, parsePptxToMarkdownPages } from '../parsers/pptx.mjs';
 import { canParseXlsx, parseXlsxToMarkdownPages } from '../parsers/xlsx.mjs';
@@ -18,7 +20,7 @@ function toSafeName(relPath) {
     .replace(/[^a-zA-Z0-9._\-가-힣]/g, '_');
 }
 
-export async function cmdIndex({ workspace, rawRoot = null }) {
+export async function cmdIndex({ workspace, rawRoot = null, vision = false, visionMaxPages = 10 }) {
   const p = workspacePaths(workspace);
   await ensureDir(p.wiki);
   await ensureDir(p.stateDir);
@@ -35,6 +37,7 @@ export async function cmdIndex({ workspace, rawRoot = null }) {
   for await (const fp of walkFiles(root)) {
     scanned++;
     const rel = path.relative(root, fp).split(path.sep).join('/');
+
     const isText = canParseText(fp);
     const isPdf = canParsePdf(fp);
     const isDocx = canParseDocx(fp);
@@ -72,8 +75,33 @@ export async function cmdIndex({ workspace, rawRoot = null }) {
       pages = [{ key: 'doc', markdown: md }];
       parserName = 'text';
     } else if (isPdf) {
+      // First try text extraction.
       pages = await parsePdfToMarkdownPages({ filePath: fp, relPath: rel, sha256: sha, maxPages: 100 });
       parserName = 'pdf';
+
+      const anyNoText = pages.some(p => p.markdown.includes('No extractable text'));
+      if (anyNoText) {
+        // Default fallback is OCR (local). Vision is opt-in due to cost.
+        if (vision) {
+          const llm = cfg?.llm;
+          if (!llm) throw new Error('Missing config llm; run setup first.');
+
+          pages = await visionTranscribePdf({
+            provider: llm.provider,
+            model: llm.model,
+            baseUrl: llm.baseUrl,
+            filePath: fp,
+            relPath: rel,
+            sha256: sha,
+            maxPages: visionMaxPages
+          });
+          parserName = 'pdf_vision';
+        } else {
+          const ok = await hasTesseract();
+          parserName = ok ? 'pdf_ocr_pending' : 'pdf_no_text';
+          // v0: keep text pages as-is; later we will wire OCR rendering+per-page OCR.
+        }
+      }
     } else if (isDocx) {
       const md = await parseDocxToMarkdown({ filePath: fp, relPath: rel, sha256: sha });
       pages = [{ key: 'doc', markdown: md }];
@@ -115,5 +143,5 @@ export async function cmdIndex({ workspace, rawRoot = null }) {
 
   await writeJson(p.indexJson, index);
 
-  console.log(JSON.stringify({ ok: true, workspace: p.root, scanned, indexed, skipped, indexPath: p.indexJson }, null, 2));
+  console.log(JSON.stringify({ ok: true, workspace: p.root, rawRoot: root, scanned, indexed, skipped, indexPath: p.indexJson, vision }, null, 2));
 }

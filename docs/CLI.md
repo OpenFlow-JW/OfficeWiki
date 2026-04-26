@@ -11,7 +11,7 @@ officewiki ingest ./my-workspace /path/to/somewhere
 ```
 
 ## index
-Put files under `./my-workspace/officewiki-raw/` and run:
+Put files under `./my-workspace/raw/` and run:
 ```bash
 officewiki index ./my-workspace
 ```

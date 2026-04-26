@@ -4,6 +4,7 @@ import { cmdIngest } from '../src/core/cmd_ingest.mjs';
 import { cmdIndex } from '../src/core/cmd_index.mjs';
 import { cmdSetup } from '../src/core/cmd_setup.mjs';
 import { cmdSummarize } from '../src/core/cmd_summarize.mjs';
+import { hasFlag, getFlagValue } from '../src/core/args.mjs';
 
 function usage() {
   console.log(`OfficeWiki (v0)
@@ -12,7 +13,7 @@ Usage:
   officewiki init <workspace>
   officewiki setup <workspace>
   officewiki ingest <workspace> <path_or_url>
-  officewiki index <workspace>
+  officewiki index <workspace> [--vision] [--vision-max-pages N]
   officewiki summarize <workspace>
 
 Notes:
@@ -52,9 +53,11 @@ async function main(argv) {
     }
 
     if (cmd === 'index') {
-      const [workspace] = rest;
+      const [workspace, ...args] = rest;
       if (!workspace) throw new Error('Missing <workspace>');
-      await cmdIndex({ workspace });
+      const vision = hasFlag(args, '--vision');
+      const visionMaxPages = Number(getFlagValue(args, '--vision-max-pages', '10'));
+      await cmdIndex({ workspace, vision, visionMaxPages });
       return;
     }
 

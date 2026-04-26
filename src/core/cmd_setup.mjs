@@ -7,7 +7,7 @@ import { cmdSummarize } from './cmd_summarize.mjs';
 export async function cmdSetup({ workspace }) {
   await cmdInit({ workspace });
 
-  const rawRoot = await ask('Raw root directory to index', { defaultValue: `${workspace}/officewiki-raw` });
+  const rawRoot = await ask('Raw root directory to index', { defaultValue: `${workspace}/raw` });
   const provider = await ask('LLM provider (openai|anthropic|gemini|openai_compat)', { defaultValue: 'openai' });
   const modelDefault = provider === 'anthropic' ? 'claude-3-5-sonnet-latest'
     : provider === 'gemini' ? 'gemini-2.0-flash'
