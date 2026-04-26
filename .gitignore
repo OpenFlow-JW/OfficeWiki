@@ -4,3 +4,6 @@ node_modules/
 
 # workspace outputs
 workspace/wiki/
+
+# local workspaces created during dev / tests
+officewiki_workspace/
